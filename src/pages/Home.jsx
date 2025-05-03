@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import MainLayout from "../layouts/MainLayout";
 import ImageUpload from "../components/ImageUpload";
 import ExtractedText from "../components/ExtractedText";
 import VoiceOptions from "../components/VoiceOptions";
@@ -53,45 +52,43 @@ const Home = () => {
   };
 
   return (
-    <MainLayout>
-      <MotionContainer
-        className="container mx-auto px-6 md:px-8 py-4"
+    <MotionContainer
+      className="container mx-auto px-6 md:px-8 py-4"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <MotionGrid
+        className="grid grid-cols-1 xl:grid-cols-2 gap-8 md:gap-10"
         variants={containerVariants}
-        initial="hidden"
-        animate="visible"
       >
-        <MotionGrid
-          className="grid grid-cols-1 xl:grid-cols-2 gap-8 md:gap-10"
-          variants={containerVariants}
-        >
-          <MotionCol className="space-y-8" variants={containerVariants}>
-            <MotionItem className="w-full" variants={itemVariants}>
-              <ImageUpload
-                onFileUpload={handleFileUpload}
-                onFileRemove={handleFileRemove}
-                isLoading={isLoading}
-              />
-            </MotionItem>
-            <MotionItem className="w-full" variants={itemVariants}>
-              <ExtractedText text={extractedText} isLoading={isLoading} />
-            </MotionItem>
-          </MotionCol>
-          <MotionItem
-            className="w-full"
-            variants={itemVariants}
-            transition={{ delay: 0.2 }}
-          >
-            <VoiceOptions
-              onVoiceSelect={() => {}}
-              onPlay={() => {}}
-              onPause={() => {}}
-              onStop={() => {}}
-              isPlaying={false}
+        <MotionCol className="space-y-8" variants={containerVariants}>
+          <MotionItem className="w-full" variants={itemVariants}>
+            <ImageUpload
+              onFileUpload={handleFileUpload}
+              onFileRemove={handleFileRemove}
+              isLoading={isLoading}
             />
           </MotionItem>
-        </MotionGrid>
-      </MotionContainer>
-    </MainLayout>
+          <MotionItem className="w-full" variants={itemVariants}>
+            <ExtractedText text={extractedText} isLoading={isLoading} />
+          </MotionItem>
+        </MotionCol>
+        <MotionItem
+          className="w-full"
+          variants={itemVariants}
+          transition={{ delay: 0.2 }}
+        >
+          <VoiceOptions
+            onVoiceSelect={() => {}}
+            onPlay={() => {}}
+            onPause={() => {}}
+            onStop={() => {}}
+            isPlaying={false}
+          />
+        </MotionItem>
+      </MotionGrid>
+    </MotionContainer>
   );
 };
 
