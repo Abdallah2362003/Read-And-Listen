@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import AboutPage from "./pages/AboutPage";
@@ -9,16 +9,34 @@ import { queryClient } from "./lib/queryClient";
 import MainLayout from "./layouts/MainLayout";
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const hasSeenSplash = localStorage.getItem("hasSeenSplash");
+    if (hasSeenSplash) {
+      setShowSplash(false);
+    }
+  }, []);
+
+  const handleSplashClose = () => {
+    setShowSplash(false);
+    localStorage.setItem("hasSeenSplash", "true");
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
-          <Route path="/" element={<SplashScreen />} />
           <Route
-            path="/home"
+            path="/"
             element={
               <MainLayout>
                 <Home />
+                {showSplash && (
+                  <div className="fixed inset-0 z-50">
+                    <SplashScreen onClose={handleSplashClose} />
+                  </div>
+                )}
               </MainLayout>
             }
           />
