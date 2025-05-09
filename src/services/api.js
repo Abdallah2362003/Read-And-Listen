@@ -5,12 +5,12 @@ export const extractText = async (file) => {
   formData.append("file", file);
 
   try {
-    const response = await axiosInstance.post("/ocr/extract", formData, {
+    const response = await axiosInstance.post("/ocr", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
-    return response;
+    return response.data.extracted_text;
   } catch (error) {
     throw new Error(error.response?.data?.message || "Failed to extract text");
   }
