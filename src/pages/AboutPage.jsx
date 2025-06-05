@@ -194,7 +194,7 @@ const AboutPage = () => {
             },
             {
               name: "Mohamed Ashraf",
-              role: "Big Data Science",
+              role: "Cyber Security Professional",
               education: "BSc. Information Technology and Computer Science",
               university: "Nile University",
               image: MohamedAshraf,
