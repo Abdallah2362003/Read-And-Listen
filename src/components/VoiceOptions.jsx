@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState ,useEffect} from "react";
 import {
   FiVolume2,
   FiPlayCircle,
@@ -7,42 +7,28 @@ import {
   FiSettings,
   FiUsers,
 } from "react-icons/fi";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const VoiceOptions = ({
+  voices = [],
   onVoiceSelect,
   onPlay,
   onPause,
   onStop,
   isPlaying,
 }) => {
-  const [voices, setVoices] = useState([]);
-  const [selectedVoice, setSelectedVoice] = useState(null);
+  const [selectedVoice, setSelectedVoice] = useState(voices[0]?.value || "");
   const [rate, setRate] = useState(1);
   const [pitch, setPitch] = useState(1);
 
-  useEffect(() => {
-    const loadVoices = () => {
-      const availableVoices = window.speechSynthesis.getVoices();
-      setVoices(availableVoices);
-      if (availableVoices.length > 0 && !selectedVoice) {
-        const defaultVoice =
-          availableVoices.find((v) => v.lang.startsWith("en")) ||
-          availableVoices[0];
-        setSelectedVoice(defaultVoice);
-        onVoiceSelect(defaultVoice);
-      }
-    };
-
-    loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-  }, []);
-
   const handleVoiceChange = (e) => {
-    const voice = voices.find((v) => v.name === e.target.value);
-    setSelectedVoice(voice);
-    onVoiceSelect(voice);
+    setSelectedVoice(e.target.value);
+    onVoiceSelect(e.target.value); 
   };
+
+  useEffect(() => {
+      onVoiceSelect(voices[0]?.value || "Aisha");
+  }, []);
 
   return (
     <motion.div
@@ -95,7 +81,7 @@ const VoiceOptions = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             whileFocus={{ scale: 1.01 }}
-            value={selectedVoice?.name || ""}
+            value={selectedVoice}
             onChange={handleVoiceChange}
             className="w-full p-3 text-base border border-sky-400/20 
                      rounded-lg bg-white/5 text-sky-300/80
@@ -103,11 +89,11 @@ const VoiceOptions = ({
           >
             {voices.map((voice) => (
               <option
-                key={voice.name}
-                value={voice.name}
+                key={voice.value}
+                value={voice.value}
                 className="bg-[#1a1b4b] text-sky-300"
               >
-                {voice.name}
+                {voice.label}
               </option>
             ))}
           </motion.select>

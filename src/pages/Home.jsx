@@ -1,13 +1,27 @@
-import React, { useState } from "react";
-import ImageUpload from "../components/ImageUpload";
-import ExtractedText from "../components/ExtractedText";
-import VoiceOptions from "../components/VoiceOptions";
-import { extractTextFromImage } from "../services/ocrService";
 import { motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import ExtractedText from "../components/ExtractedText";
+import ImageUpload from "../components/ImageUpload";
+import VoiceOptions from "../components/VoiceOptions";
+import { useTTS } from "../hooks/useTTS";
+import { extractTextFromImage } from "../services/ocrService";
 
 const Home = () => {
   const [extractedText, setExtractedText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const {
+    isPlaying,
+    handlePlayAudio,
+    handlePauseAudio,
+    handleStopAudio,
+    handleVoiceChange,
+    resetAudio,
+  } = useTTS();
+
+  useEffect(() => {
+    resetAudio();
+  }, [extractedText]);
 
   const handleFileUpload = async (file) => {
     setIsLoading(true);
@@ -51,6 +65,19 @@ const Home = () => {
     },
   };
 
+  const customVoices = [
+    "Aisha",
+    "Rashid",
+    "Zain",
+    "Ali",
+    "Khadija",
+    "Najwa",
+    "Zaydoun",
+    "Adam",
+    "Yassin",
+    "Shahrazad",
+  ].map((name) => ({ value: name, label: name }));
+
   return (
     <MotionContainer
       className="container mx-auto px-6 md:px-8 py-4"
@@ -80,11 +107,12 @@ const Home = () => {
           transition={{ delay: 0.2 }}
         >
           <VoiceOptions
-            onVoiceSelect={() => {}}
-            onPlay={() => {}}
-            onPause={() => {}}
-            onStop={() => {}}
-            isPlaying={false}
+            voices={customVoices}
+            onVoiceSelect={handleVoiceChange}
+            onPlay={() => handlePlayAudio(extractedText)}
+            onPause={handlePauseAudio}
+            onStop={handleStopAudio}
+            isPlaying={isPlaying}
           />
         </MotionItem>
       </MotionGrid>

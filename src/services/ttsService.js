@@ -1,26 +1,19 @@
-// TODO: Replace with actual TTS API implementation
-export const synthesizeSpeech = async (text, voice, audioSample = null) => {
+import axiosInstance from "../lib/axios";
+
+export const synthesizeSpeech = async (text, voice) => {
   try {
-    // This is a placeholder implementation
-    // In a real application, you would:
-    // 1. If audioSample exists, use voice cloning API
-    // 2. Otherwise, use standard TTS API with selected voice
+    const formData = new FormData();
+    formData.append("text", text);
+    formData.append("voice", voice);
 
-    if (audioSample) {
-      console.log("Using voice cloning with sample:", audioSample);
-      // TODO: Implement voice cloning
-    }
-
-    // For now, we'll use the browser's built-in speech synthesis
-    return new Promise((resolve, reject) => {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.voice = window.speechSynthesis
-        .getVoices()
-        .find((v) => v.name.includes(voice));
-      utterance.onend = () => resolve(null);
-      utterance.onerror = reject;
-      window.speechSynthesis.speak(utterance);
+    const response = await axiosInstance.post("/tts", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      responseType: "blob",
     });
+    const audioUrl = URL.createObjectURL(response);
+    return audioUrl;
   } catch (error) {
     console.error("TTS Error:", error);
     throw new Error("Failed to convert text to speech");
