@@ -1,6 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiHome } from "react-icons/fi";
+import EhkiLogo from "../assets/EHKI YA SHAHRAZAD.png";
 
 const SplashScreen = ({ onClose }) => {
   return (
@@ -23,15 +24,20 @@ const SplashScreen = ({ onClose }) => {
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              className="w-24 h-24 rounded-full bg-gradient-to-br from-sky-400 to-purple-500 flex items-center justify-center shadow-2xl"
+              className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-sky-400 to-purple-500 flex items-center justify-center shadow-2xl"
             >
-              <FiHome className="w-12 h-12 text-white" />
+              <img
+                src={EhkiLogo}
+                alt="EHKI YA SHAHRAZAD"
+                className="w-full h-full object-cover"
+              />
             </motion.div>
 
             <h1 className="text-4xl md:text-5xl font-extrabold text-white text-center drop-shadow-lg">
               Welcome to{" "}
               <span className="bg-gradient-to-r from-sky-400 to-purple-400 bg-clip-text text-transparent">
-                Read & Listen
+                {" "}
+                EHKI YA SHAHRAZAD{" "}
               </span>
             </h1>
 

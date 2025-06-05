@@ -4,7 +4,6 @@ import {
   FiMoon,
   FiSun,
   FiHelpCircle,
-  FiHome,
   FiInfo,
   FiMenu,
   FiX,
@@ -12,6 +11,7 @@ import {
 import { HelpModal } from "../components/HelpModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import EhkiLogo from "../assets/EHKI YA SHAHRAZAD.png";
 
 const MotionContainer = motion.div;
 const MotionCol = motion.div;
@@ -107,14 +107,18 @@ const MainLayout = ({ children }) => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 mb-2 md:mb-0">
               <motion.div
-                className="w-11 h-11 rounded-full bg-gradient-to-br from-sky-400 to-purple-500 flex items-center justify-center shadow-md"
+                className="w-11 h-11 rounded-full overflow-hidden bg-gradient-to-br from-sky-400 to-purple-500 flex items-center justify-center shadow-md"
                 whileHover={{ rotate: 360, scale: 1.08 }}
                 transition={{ duration: 0.7 }}
               >
-                <FiHome className="w-6 h-6 text-white" />
+                <img
+                  src={EhkiLogo}
+                  alt="EHKI YA SHAHRAZAD"
+                  className="w-full h-full object-cover"
+                />
               </motion.div>
               <span className="text-2xl font-extrabold bg-gradient-to-r from-sky-400 to-purple-400 bg-clip-text text-transparent tracking-tight drop-shadow">
-                Read & Listen
+                EHKI YA SHAHRAZAD
               </span>
             </Link>
 
