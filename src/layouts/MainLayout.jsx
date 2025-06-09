@@ -11,7 +11,7 @@ import {
 import { HelpModal } from "../components/HelpModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import EhkiLogo from "../assets/EHKI YA SHAHRAZAD.png";
+import EhkiLogo from "../assets/favicon.svg";
 
 const MotionContainer = motion.div;
 const MotionCol = motion.div;

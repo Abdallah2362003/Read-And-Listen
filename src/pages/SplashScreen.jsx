@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiHome } from "react-icons/fi";
-import EhkiLogo from "../assets/EHKI YA SHAHRAZAD.png";
+import EhkiLogo from "../assets/girl.svg";
 
 const SplashScreen = ({ onClose }) => {
   return (
@@ -42,7 +42,7 @@ const SplashScreen = ({ onClose }) => {
             </h1>
 
             <p className="text-lg md:text-xl text-sky-100/90 text-center max-w-xl">
-              Your smart OCR & Text-to-Speech assistant. Upload, extract, and
+              Your AI-Powered OCR and Speech Storytelling Platform. Upload, extract, and
               listen to your documents with ease!
             </p>
 

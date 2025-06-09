@@ -194,7 +194,7 @@ const AboutPage = () => {
             },
             {
               name: "Mohamed Ashraf",
-              role: "Cyber Security Professional",
+              role: "Cybersecurity Expert",
               education: "BSc. Information Technology and Computer Science",
               university: "Nile University",
               image: MohamedAshraf,
