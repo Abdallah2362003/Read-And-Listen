@@ -12,11 +12,15 @@ const Home = () => {
 
   const {
     isPlaying,
+    audioUrl,
+    audioRef,
     handlePlayAudio,
     handlePauseAudio,
     handleStopAudio,
     handleVoiceChange,
     resetAudio,
+    selectedVoice,
+    setIsPlaying,
   } = useTTS();
 
   useEffect(() => {
@@ -39,30 +43,13 @@ const Home = () => {
     setExtractedText("");
   };
 
-  const MotionContainer = motion.div;
-  const MotionGrid = motion.div;
-  const MotionCol = motion.div;
-  const MotionItem = motion.div;
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-      },
-    },
+  const handlePlay = async () => {
+    if (!audioUrl) {
+      await handlePlayAudio(extractedText);
+    } else if (audioRef.current) {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
   };
 
   const customVoices = [
@@ -79,44 +66,39 @@ const Home = () => {
   ].map((name) => ({ value: name, label: name }));
 
   return (
-    <MotionContainer
+    <motion.div
       className="container mx-auto px-6 md:px-8 py-4"
-      variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      <MotionGrid
-        className="grid grid-cols-1 xl:grid-cols-2 gap-8 md:gap-10"
-        variants={containerVariants}
-      >
-        <MotionCol className="space-y-8" variants={containerVariants}>
-          <MotionItem className="w-full" variants={itemVariants}>
+      <motion.div className="grid grid-cols-1 xl:grid-cols-2 gap-8 md:gap-10">
+        <motion.div className="space-y-8">
+          <motion.div className="w-full">
             <ImageUpload
               onFileUpload={handleFileUpload}
               onFileRemove={handleFileRemove}
               isLoading={isLoading}
             />
-          </MotionItem>
-          <MotionItem className="w-full" variants={itemVariants}>
+          </motion.div>
+          <motion.div className="w-full">
             <ExtractedText text={extractedText} isLoading={isLoading} />
-          </MotionItem>
-        </MotionCol>
-        <MotionItem
-          className="w-full"
-          variants={itemVariants}
-          transition={{ delay: 0.2 }}
-        >
+          </motion.div>
+        </motion.div>
+        <motion.div className="w-full">
           <VoiceOptions
             voices={customVoices}
             onVoiceSelect={handleVoiceChange}
-            onPlay={() => handlePlayAudio(extractedText)}
+            onPlay={handlePlay}
             onPause={handlePauseAudio}
             onStop={handleStopAudio}
             isPlaying={isPlaying}
+            selectedVoice={selectedVoice}
+            audioUrl={audioUrl}
+            audioRef={audioRef}
           />
-        </MotionItem>
-      </MotionGrid>
-    </MotionContainer>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 };
 

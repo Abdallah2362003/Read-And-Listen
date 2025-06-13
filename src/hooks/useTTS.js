@@ -1,18 +1,11 @@
-import { audio } from "motion/react-client";
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { synthesizeSpeech } from "../services/ttsService";
 
 export const useTTS = () => {
-  const [selectedVoice, setSelectedVoice] = useState("default");
+  const [selectedVoice, setSelectedVoice] = useState("Aisha");
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioUrl, setAudioUrl] = useState(null);
   const audioRef = useRef(null);
-
-  const handleAudioUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setAudioSample(URL.createObjectURL(file));
-    }
-  };
 
   const handleVoiceChange = (voiceValue) => {
     setSelectedVoice(voiceValue);
@@ -23,24 +16,16 @@ export const useTTS = () => {
   }, [selectedVoice]);
 
   const handlePlayAudio = async (text) => {
-    if (!text || isPlaying) return;
-
-    setIsPlaying(true);
-
-    if (audioRef.current) {
-      audioRef.current.play();
-      return;
-    }
-
-    try {
-      const audioUrl = await synthesizeSpeech(text, selectedVoice);
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-      audio.onended = () => setIsPlaying(false);
-      audio.play();
-    } catch (error) {
-      console.error("Error playing audio:", error);
-      setIsPlaying(false);
+    if (!text) return;
+    if (!audioUrl) {
+      const url = await synthesizeSpeech(text, selectedVoice);
+      setAudioUrl(url);
+      setIsPlaying(true);
+    } else {
+      if (audioRef.current) {
+        audioRef.current.play();
+        setIsPlaying(true);
+      }
     }
   };
 
@@ -63,19 +48,22 @@ export const useTTS = () => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      audioRef.current = null;
     }
+    setAudioUrl(null);
     setIsPlaying(false);
   };
 
   return {
     selectedVoice,
     isPlaying,
-    handleAudioUpload,
+    audioUrl,
+    audioRef,
     handleVoiceChange,
     handlePlayAudio,
     handlePauseAudio,
     handleStopAudio,
     resetAudio,
+    setAudioUrl,
+    setIsPlaying,
   };
 };

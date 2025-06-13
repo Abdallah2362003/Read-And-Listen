@@ -1,13 +1,13 @@
-import React, { useState ,useEffect} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   FiVolume2,
-  FiPlayCircle,
-  FiPauseCircle,
-  FiSquare,
-  FiSettings,
   FiUsers,
+  FiPlay,
+  FiPause,
+  FiSquare,
 } from "react-icons/fi";
 import { motion } from "framer-motion";
+import WaveSurfer from "wavesurfer.js";
 
 const VoiceOptions = ({
   voices = [],
@@ -15,20 +15,141 @@ const VoiceOptions = ({
   onPlay,
   onPause,
   onStop,
-  isPlaying,
+  selectedVoice,
+  audioUrl,
+  audioRef: externalAudioRef,
 }) => {
-  const [selectedVoice, setSelectedVoice] = useState(voices[0]?.value || "");
-  const [rate, setRate] = useState(1);
-  const [pitch, setPitch] = useState(1);
+  const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [shouldPlay, setShouldPlay] = useState(false);
+  const [isWsPlaying, setIsWsPlaying] = useState(false);
+  const wavesurferRef = useRef(null);
+  const waveformContainerRef = useRef(null);
 
-  const handleVoiceChange = (e) => {
-    setSelectedVoice(e.target.value);
-    onVoiceSelect(e.target.value); 
+  // Use external ref if provided, else create local
+  const audioRef = externalAudioRef || useRef(null);
+
+  // Format time as mm:ss
+  const formatTime = (t) => {
+    if (isNaN(t)) return "00:00";
+    const m = Math.floor(t / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = Math.floor(t % 60)
+      .toString()
+      .padStart(2, "0");
+    return `${m}:${s}`;
   };
 
+  // Voice selection logic
+  const [internalVoice, setInternalVoice] = useState(voices[0]?.value || "Aisha");
   useEffect(() => {
-      onVoiceSelect(voices[0]?.value || "Aisha");
-  }, []);
+    setInternalVoice(selectedVoice || voices[0]?.value || "Aisha");
+  }, [selectedVoice, voices]);
+
+  const handleVoiceChange = (e) => {
+    setInternalVoice(e.target.value);
+    onVoiceSelect(e.target.value);
+  };
+
+  // --- WaveSurfer Visualization ---
+  useEffect(() => {
+    if (!audioUrl || !waveformContainerRef.current) return;
+
+    // Clean up previous instance
+    if (wavesurferRef.current) {
+      wavesurferRef.current.destroy();
+      wavesurferRef.current = null;
+    }
+
+    // Create new WaveSurfer instance
+    wavesurferRef.current = WaveSurfer.create({
+      container: waveformContainerRef.current,
+      waveColor: "#38bdf8",
+      progressColor: "#0ea5e9",
+      cursorColor: "#fff",
+      barWidth: 2,
+      barRadius: 2,
+      responsive: true,
+      height: 60,
+      normalize: true,
+      backend: "MediaElement",
+      interact: true,
+    });
+
+    // Load audio
+    wavesurferRef.current.load(audioUrl);
+
+    // Sync with audio element
+    if (audioRef.current) {
+      wavesurferRef.current.setMediaElement(audioRef.current);
+    }
+
+    // Progress/time handlers
+    const ws = wavesurferRef.current;
+    ws.on("audioprocess", () => {
+      setCurrentTime(ws.getCurrentTime());
+      setProgress((ws.getCurrentTime() / (ws.getDuration() || 1)) * 100);
+    });
+    ws.on("seek", () => {
+      setCurrentTime(ws.getCurrentTime());
+      setProgress((ws.getCurrentTime() / (ws.getDuration() || 1)) * 100);
+    });
+    ws.on("ready", () => {
+      setDuration(ws.getDuration());
+      setCurrentTime(0);
+      setProgress(0);
+      if (shouldPlay) {
+        ws.play();
+        setShouldPlay(false);
+      }
+    });
+    ws.on("finish", () => {
+      setCurrentTime(ws.getDuration());
+      setProgress(100);
+      setIsWsPlaying(false);
+      onStop && onStop();
+    });
+    ws.on("play", () => {
+      setIsWsPlaying(true);
+      onPlay && onPlay();
+    });
+    ws.on("pause", () => {
+      setIsWsPlaying(false);
+      onPause && onPause();
+    });
+
+    return () => {
+      ws.destroy();
+      wavesurferRef.current = null;
+    };
+    // eslint-disable-next-line
+  }, [audioUrl]);
+
+  // --- Play/Pause/Stop logic ---
+  const handlePlayPauseClick = async () => {
+    if (!audioUrl) {
+      await onPlay();
+      setShouldPlay(true);
+    } else if (wavesurferRef.current) {
+      wavesurferRef.current.playPause();
+    }
+  };
+
+  const handleStopClick = () => {
+    if (wavesurferRef.current) {
+      wavesurferRef.current.stop();
+    }
+    onStop && onStop();
+  };
+
+  const handleSeek = (e) => {
+    if (wavesurferRef.current) {
+      const percent = e.target.value;
+      wavesurferRef.current.seekTo(percent / 100);
+    }
+  };
 
   return (
     <motion.div
@@ -81,7 +202,7 @@ const VoiceOptions = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             whileFocus={{ scale: 1.01 }}
-            value={selectedVoice}
+            value={internalVoice}
             onChange={handleVoiceChange}
             className="w-full p-3 text-base border border-sky-400/20 
                      rounded-lg bg-white/5 text-sky-300/80
@@ -99,136 +220,81 @@ const VoiceOptions = ({
           </motion.select>
         </motion.div>
 
-        {/* Speed Control */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="space-y-3"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              >
-                <FiSettings className="w-5 h-5 text-sky-400" />
-              </motion.div>
-              <label className="text-base font-medium text-sky-400">
-                Reading Speed
-              </label>
-            </div>
-            <motion.span
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 0.3 }}
-              className="text-base text-sky-300/80 bg-sky-400/10 px-3 py-1.5 rounded"
-            >
-              {rate}x
-            </motion.span>
-          </div>
-          <motion.input
-            whileFocus={{ scale: 1.01 }}
-            type="range"
-            min="0.5"
-            max="2"
-            step="0.1"
-            value={rate}
-            onChange={(e) => setRate(e.target.value)}
-            className="w-full h-2 bg-sky-400/10 rounded-lg appearance-none cursor-pointer
-                     [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 
-                     [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-sky-400 
-                     [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer
-                     hover:[&::-webkit-slider-thumb]:bg-sky-300 transition-all duration-300"
-          />
-        </motion.div>
-
-        {/* Pitch Control */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="space-y-3"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              >
-                <FiSettings className="w-5 h-5 text-sky-400" />
-              </motion.div>
-              <label className="text-base font-medium text-sky-400">
-                Voice Pitch
-              </label>
-            </div>
-            <motion.span
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 0.3 }}
-              className="text-base text-sky-300/80 bg-sky-400/10 px-3 py-1.5 rounded"
-            >
-              {pitch}x
-            </motion.span>
-          </div>
-          <motion.input
-            whileFocus={{ scale: 1.01 }}
-            type="range"
-            min="0.5"
-            max="2"
-            step="0.1"
-            value={pitch}
-            onChange={(e) => setPitch(e.target.value)}
-            className="w-full h-2 bg-sky-400/10 rounded-lg appearance-none cursor-pointer
-                     [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 
-                     [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-sky-400 
-                     [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer
-                     hover:[&::-webkit-slider-thumb]:bg-sky-300 transition-all duration-300"
-          />
-        </motion.div>
-
-        {/* Playback Controls */}
+        {/* Audio Player with Waveform */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="flex justify-center items-center gap-3"
+          className="flex flex-col items-center gap-4"
         >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onPlay}
-            disabled={isPlaying}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 
-                     bg-sky-400 text-white rounded-lg 
-                     hover:bg-sky-300 disabled:opacity-50 
-                     disabled:cursor-not-allowed transition-colors text-base"
-          >
-            <FiPlayCircle className="w-5 h-5" />
-            Play
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onPause}
-            disabled={!isPlaying}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 
-                     bg-white/5 text-sky-300 rounded-lg hover:bg-white/10 
-                     disabled:opacity-50 disabled:cursor-not-allowed 
-                     transition-colors text-base"
-          >
-            <FiPauseCircle className="w-5 h-5" />
-            Pause
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onStop}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 
-                     bg-white/5 text-sky-300 rounded-lg hover:bg-white/10 
-                     transition-colors text-base"
-          >
-            <FiSquare className="w-5 h-5" />
-            Stop
-          </motion.button>
+          {/* WaveSurfer Container */}
+          <div
+            ref={waveformContainerRef}
+            style={{
+              width: "100%",
+              maxWidth: 400,
+              height: 60,
+              borderRadius: "0.5rem",
+              background: "#082f49",
+              border: "1px solid #38bdf833",
+              boxShadow: "0 2px 8px #0ea5e933",
+              marginBottom: "1rem",
+            }}
+          />
+          {/* Hidden audio element for backend compatibility */}
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            className="hidden"
+          />
+          <div className="flex items-center gap-4 w-full max-w-xl">
+            {/* Play/Pause */}
+            <button
+              onClick={handlePlayPauseClick}
+              className={`flex items-center justify-center w-12 h-12 rounded-full 
+                ${isWsPlaying ? "bg-sky-400" : "bg-white/10"} 
+                text-white shadow-lg hover:bg-sky-300 transition-all`}
+              aria-label={isWsPlaying ? "Pause" : "Play"}
+            >
+              {isWsPlaying ? (
+                <FiPause className="w-7 h-7" />
+              ) : (
+                <FiPlay className="w-7 h-7" />
+              )}
+            </button>
+            {/* Stop */}
+            <button
+              onClick={handleStopClick}
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/10 text-sky-300 hover:bg-white/20 transition-all"
+              aria-label="Stop"
+            >
+              <FiSquare className="w-7 h-7" />
+            </button>
+            {/* Current Time */}
+            <span className="text-sky-300/80 font-mono text-sm w-14 text-right">
+              {formatTime(currentTime)}
+            </span>
+            {/* Progress Bar */}
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={progress}
+              onChange={handleSeek}
+              className="flex-1 h-2 bg-sky-400/20 rounded-lg appearance-none cursor-pointer
+                [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 
+                [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-sky-400 
+                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer
+                hover:[&::-webkit-slider-thumb]:bg-sky-300 transition-all duration-300"
+              style={{
+                background: `linear-gradient(to right, #38bdf8 ${progress}%, #1e293b ${progress}%)`,
+              }}
+            />
+            {/* Total Duration */}
+            <span className="text-sky-300/80 font-mono text-sm w-14 text-left">
+              {formatTime(duration)}
+            </span>
+          </div>
         </motion.div>
       </motion.div>
     </motion.div>
