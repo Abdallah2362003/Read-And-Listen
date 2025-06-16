@@ -24,6 +24,9 @@ const VoiceOptions = ({
   const [duration, setDuration] = useState(0);
   const [shouldPlay, setShouldPlay] = useState(false);
   const [isWsPlaying, setIsWsPlaying] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [playbackRate, setPlaybackRate] = useState(1);
+
   const wavesurferRef = useRef(null);
   const waveformContainerRef = useRef(null);
 
@@ -86,6 +89,10 @@ const VoiceOptions = ({
       wavesurferRef.current.setMediaElement(audioRef.current);
     }
 
+    // Set initial volume and speed
+    wavesurferRef.current.setVolume(volume);
+    wavesurferRef.current.setPlaybackRate(playbackRate);
+
     // Progress/time handlers
     const ws = wavesurferRef.current;
     ws.on("audioprocess", () => {
@@ -127,6 +134,20 @@ const VoiceOptions = ({
     // eslint-disable-next-line
   }, [audioUrl]);
 
+  // Update volume in WaveSurfer
+  useEffect(() => {
+    if (wavesurferRef.current) {
+      wavesurferRef.current.setVolume(volume);
+    }
+  }, [volume]);
+
+  // Update playback rate in WaveSurfer
+  useEffect(() => {
+    if (wavesurferRef.current) {
+      wavesurferRef.current.setPlaybackRate(playbackRate);
+    }
+  }, [playbackRate]);
+
   // --- Play/Pause/Stop logic ---
   const handlePlayPauseClick = async () => {
     if (!audioUrl) {
@@ -137,18 +158,32 @@ const VoiceOptions = ({
     }
   };
 
+  const handlePlay = () => {
+    if (wavesurferRef.current) wavesurferRef.current.play();
+  };
+  const handlePause = () => {
+    if (wavesurferRef.current) wavesurferRef.current.pause();
+  };
   const handleStopClick = () => {
     if (wavesurferRef.current) {
       wavesurferRef.current.stop();
     }
     onStop && onStop();
   };
+  const handleStop = handleStopClick;
 
   const handleSeek = (e) => {
     if (wavesurferRef.current) {
       const percent = e.target.value;
       wavesurferRef.current.seekTo(percent / 100);
     }
+  };
+
+  const handleVolumeChange = (e) => {
+    setVolume(Number(e.target.value));
+  };
+  const handleSpeedChange = (e) => {
+    setPlaybackRate(Number(e.target.value));
   };
 
   return (
@@ -296,6 +331,63 @@ const VoiceOptions = ({
             </span>
           </div>
         </motion.div>
+
+        {/* Extra Controls */}
+        <div className="flex flex-col gap-6 w-full max-w-xl mt-8">
+          {/* Play, Pause, Stop Buttons */}
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={handlePlay}
+              className="flex items-center gap-2 px-6 py-2 rounded-lg bg-sky-400 text-white font-semibold shadow hover:bg-sky-500 transition"
+              aria-label="Play"
+            >
+              <FiPlay className="w-5 h-5" /> Play
+            </button>
+            <button
+              onClick={handlePause}
+              className="flex items-center gap-2 px-6 py-2 rounded-lg bg-sky-400 text-white font-semibold shadow hover:bg-sky-500 transition"
+              aria-label="Pause"
+            >
+              <FiPause className="w-5 h-5" /> Pause
+            </button>
+            <button
+              onClick={handleStop}
+              className="flex items-center gap-2 px-6 py-2 rounded-lg bg-sky-400 text-white font-semibold shadow hover:bg-sky-500 transition"
+              aria-label="Stop"
+            >
+              <FiSquare className="w-5 h-5" /> Stop
+            </button>
+          </div>
+          {/* Volume and Speed Sliders */}
+          <div className="flex flex-col md:flex-row gap-6 items-center justify-center">
+            <div className="flex items-center gap-3 w-full max-w-xs">
+              <span className="text-sky-300/80 font-mono text-xs w-12">Volume</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={volume}
+                onChange={handleVolumeChange}
+                className="flex-1 h-2 bg-sky-400/20 rounded-lg appearance-none cursor-pointer"
+              />
+              <span className="text-sky-300/80 font-mono text-xs w-8 text-right">{Math.round(volume * 100)}</span>
+            </div>
+            <div className="flex items-center gap-3 w-full max-w-xs">
+              <span className="text-sky-300/80 font-mono text-xs w-12">Speed</span>
+              <input
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.01"
+                value={playbackRate}
+                onChange={handleSpeedChange}
+                className="flex-1 h-2 bg-sky-400/20 rounded-lg appearance-none cursor-pointer"
+              />
+              <span className="text-sky-300/80 font-mono text-xs w-8 text-right">{playbackRate.toFixed(2)}x</span>
+            </div>
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   );
